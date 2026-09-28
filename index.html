@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zoowonder: El Secreto del Huevo Dorado</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Canvas Confetti CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Font Awesome Icons CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Fredoka & Comic Neue -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Fredoka', cursive, sans-serif;
+            background: linear-gradient(135deg, #a8ff78 0%, #78ffd6 100%);
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .font-comic {
+            font-family: 'Comic Neue', cursive, sans-serif;
+        }
+
+        /* Pulsing & Floating Animations */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-12px) rotate(2deg); }
+        }
+
+        @keyframes wiggle {
+            0%, 100% { transform: rotate(-5deg); }
+            50% { transform: rotate(5deg); }
+        }
+
+        @keyframes eggShake {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            20% { transform: translate(-8px, 0) rotate(-10deg); }
+            40% { transform: translate(8px, 0) rotate(10deg); }
+            60% { transform: translate(-6px, 0) rotate(-6deg); }
+            80% { transform: translate(6px, 0) rotate(6deg); }
+            100% { transform: translate(0, 0) rotate(0deg); }
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 15px rgba(255, 215, 0, 0.6); }
+            50% { box-shadow: 0 0 35px rgba(255, 215, 0, 1); }
+        }
+
+        .animate-float {
+            animation: float 3.5s ease-in-out infinite;
+        }
+
+        .animate-wiggle {
+            animation: wiggle 1.2s ease-in-out infinite;
+        }
+
+        .animate-egg-shake {
+            animation: eggShake 0.4s ease-in-out;
+        }
+
+        .pulse-glow {
+            animation: pulseGlow 2s infinite;
+        }
+
+        /* Custom Scrollbar for Album */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4ade80;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #22c55e;
+        }
+
+        .bubble-btn {
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .bubble-btn:active {
+            transform: scale(0.92);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(10px);
+            border: 4px solid rgba(255, 255, 255, 0.9);
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-800 flex flex-col justify-between overflow-x-hidden selection:bg-amber-300">
+
+    <!-- Navbar / Header -->
+    <header class="w-full bg-white/80 backdrop-blur-md border-b-4 border-yellow-400 p-3 sm:p-4 sticky top-0 z-50 shadow-md">
+        <div class="max-w-6xl mx-auto flex flex-wrap justify-between items-center gap-2">
+            <!-- Logo -->
+            <div onclick="showSection('home')" class="flex items-center gap-3 cursor-pointer group">
+                <div class="bg-yellow-400 p-2 sm:p-3 rounded-2xl shadow-inner group-hover:scale-110 transition-transform">
+                    <span class="text-2xl sm:text-3xl">🥚</span>
+                </div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-bold text-emerald-600 tracking-wide leading-none">ZOOWONDER</h1>
+                    <p class="text-xs sm:text-sm text-amber-600 font-semibold">El Secreto del Huevo Dorado</p>
+                </div>
+            </div>
+
+            <!-- Header Controls -->
+            <div class="flex items-center gap-2 sm:gap-4">
+                <button id="audio-toggle" onclick="toggleAudioState()" class="bubble-btn bg-amber-100 hover:bg-amber-200 text-amber-800 font-bold px-3 py-2 rounded-xl text-xs sm:text-sm flex items-center gap-2 border-2 border-amber-300 shadow">
+                    <i id="audio-icon" class="fas fa-volume-up text-lg text-amber-600"></i>
+                    <span id="audio-status" class="hidden sm:inline">Sonido: ON</span>
+                </button>
+                
+                <button onclick="showSection('album')" class="bubble-btn bg-purple-500 hover:bg-purple-600 text-white font-bold px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm flex items-center gap-2 shadow-lg border-2 border-purple-300">
+                    <i class="fas fa-book-open text-base"></i>
+                    <span>Álbum (<span id="unlocked-count">0</span>/10)</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-5xl mx-auto w-full p-4 flex-grow flex flex-col justify-center items-center my-4">
+
+        <!-- 1. HOME SCREEN -->
+        <section id="sec-home" class="w-full flex flex-col items-center text-center space-y-6">
+            <!-- Hero Mascot -->
+            <div class="relative">
+                <div class="w-36 h-36 sm:w-48 sm:h-48 bg-gradient-to-tr from-yellow-300 to-amber-400 rounded-full flex items-center justify-center shadow-2xl animate-float border-4 border-white pulse-glow">
+                    <span class="text-7xl sm:text-9xl transform -translate-y-2">🐣</span>
+                </div>
+                <div class="absolute -bottom-2 -right-2 bg-emerald-500 text-white text-xs sm:text-sm font-bold px-3 py-1 rounded-full shadow border-2 border-white">
+                    ¡Lina la Búho te da la bienvenida!
+                </div>
+            </div>
+
+            <div class="max-w-2xl bg-white/90 p-6 rounded-3xl shadow-xl border-4 border-emerald-300 space-y-3">
+                <h2 class="text-2xl sm:text-4xl font-extrabold text-emerald-700">¡Aprende Jugando en la Naturaleza!</h2>
+                <p class="text-slate-600 text-base sm:text-lg font-medium">
+                    ¿Sabías que algunos animales nacen de huevitos y otros de la pancita de su mamá? 
+                    ¡Ayuda a Lina a descubrir todos sus secretos!
+                </p>
+                <div class="pt-2 flex justify-center">
+                    <button onclick="speakInstruction('¡Hola amiguito! Elige un modo de juego para comenzar a explorar la naturaleza.'); playSound('click');" class="bg-amber-100 hover:bg-amber-200 text-amber-700 font-bold px-4 py-2 rounded-full text-sm flex items-center gap-2 border border-amber-300">
+                        <i class="fas fa-comment-dots text-lg"></i>
+                        <span>Escuchar Instrucciones</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Game Modes Menu -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 w-full max-w-4xl pt-2">
+                <!-- Mode 1 Card -->
+                <div onclick="startIncubator()" class="glass-card rounded-3xl p-6 flex flex-col items-center text-center cursor-pointer hover:scale-105 transition-transform border-b-8 border-yellow-400 shadow-lg group">
+                    <div class="w-20 h-20 bg-yellow-100 rounded-2xl flex items-center justify-center text-4xl mb-4 group-hover:rotate-12 transition-transform shadow-inner">
+                        🪺
+                    </div>
+                    <h3 class="text-xl font-bold text-amber-700 mb-2">La Incubadora Mágica</h3>
+                    <p class="text-xs sm:text-sm text-slate-600 mb-4">Frota o haz clic para eclosionar huevos de animales <b>Ovíparos</b>.</p>
+                    <span class="mt-auto bg-yellow-400 text-yellow-950 font-bold px-4 py-2 rounded-xl text-sm shadow group-hover:bg-yellow-300">¡A Eclosionar!</span>
+                </div>
+
+                <!-- Mode 2 Card -->
+                <div onclick="startRefuge()" class="glass-card rounded-3xl p-6 flex flex-col items-center text-center cursor-pointer hover:scale-105 transition-transform border-b-8 border-pink-400 shadow-lg group">
+                    <div class="w-20 h-20 bg-pink-100 rounded-2xl flex items-center justify-center text-4xl mb-4 group-hover:-rotate-12 transition-transform shadow-inner">
+                        🍼
+                    </div>
+                    <h3 class="text-xl font-bold text-pink-700 mb-2">El Refugio Mamá</h3>
+                    <p class="text-xs sm:text-sm text-slate-600 mb-4">Alimenta a las mamás para ver nacer a sus bebés <b>Mamíferos</b>.</p>
+                    <span class="mt-auto bg-pink-400 text-white font-bold px-4 py-2 rounded-xl text-sm shadow group-hover:bg-pink-300">¡Cuidar Bebés!</span>
+                </div>
+
+                <!-- Mode 3 Card -->
+                <div onclick="startDetective()" class="glass-card rounded-3xl p-6 flex flex-col items-center text-center cursor-pointer hover:scale-105 transition-transform border-b-8 border-sky-400 shadow-lg group">
+                    <div class="w-20 h-20 bg-sky-100 rounded-2xl flex items-center justify-center text-4xl mb-4 group-hover:scale-110 transition-transform shadow-inner">
+                        🕵️‍♂️
+                    </div>
+                    <h3 class="text-xl font-bold text-sky-700 mb-2">El Gran Desafío</h3>
+                    <p class="text-xs sm:text-sm text-slate-600 mb-4">Clasifica animales veloces y descubre casos misteriosos como el <b>Ornitorrinco</b>.</p>
+                    <span class="mt-auto bg-sky-400 text-white font-bold px-4 py-2 rounded-xl text-sm shadow group-hover:bg-sky-300">¡Ser Detective!</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. MODE: LA INCUBADORA MÁGICA (OVÍPAROS) -->
+        <section id="sec-incubator" class="w-full hidden flex-col items-center text-center space-y-4">
+            <div class="flex items-center justify-between w-full max-w-xl bg-white/80 p-3 rounded-2xl shadow border-2 border-yellow-300">
+                <button onclick="showSection('home')" class="bubble-btn bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-3 py-1.5 rounded-xl text-sm flex items-center gap-1">
+                    <i class="fas fa-arrow-left"></i> Menú
+                </button>
+                <span class="font-extrabold text-amber-600 text-lg sm:text-xl">🪺 La Incubadora Mágica</span>
+                <span id="egg-counter-badge" class="bg-yellow-400 text-yellow-900 font-bold px-3 py-1 rounded-full text-xs">0 / 5</span>
+            </div>
+
+            <div class="glass-card w-full max-w-xl p-6 rounded-3xl flex flex-col items-center shadow-xl relative overflow-hidden border-4 border-yellow-200">
+                <!-- Instruction Header -->
+                <p id="incubator-hint" class="text-slate-700 font-bold text-base sm:text-xl mb-4">
+                    ¡Toca o frota el huevo repetidamente para darle calor y romper la cáscara!
+                </p>
+
+                <!-- Egg Canvas Area -->
+                <div class="relative my-4 cursor-pointer group flex items-center justify-center" onclick="crackEgg()">
+                    <!-- Sparkles/Glow backdrop -->
+                    <div class="absolute w-64 h-64 bg-amber-200 rounded-full blur-2xl opacity-50 animate-pulse"></div>
+
+                    <!-- The Egg Visual -->
+                    <div id="egg-element" class="relative w-48 h-60 bg-gradient-to-tr from-amber-100 via-amber-200 to-yellow-100 rounded-[50%_50%_50%_50%_/_60%_60%_40%_40%] border-8 border-amber-300 shadow-2xl flex items-center justify-center transition-transform active:scale-95">
+                        <div id="crack-lines" class="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity">
+                            <!-- SVG Cracks dynamically updated -->
+                            <svg class="w-32 h-32 text-amber-800" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M13 3l-2 5 3 3-4 5 3 4" />
+                            </svg>
+                        </div>
+                        <span id="egg-emoji-preview" class="text-7xl opacity-20 filter blur-sm select-none">❓</span>
+                    </div>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="w-full bg-slate-200 rounded-full h-6 mb-4 border-2 border-slate-300 overflow-hidden relative">
+                    <div id="egg-progress" class="bg-gradient-to-r from-yellow-400 to-amber-500 h-full w-0 transition-all duration-200 rounded-full"></div>
+                    <span id="egg-progress-text" class="absolute inset-0 text-xs font-bold flex items-center justify-center text-slate-700">0% Calor</span>
+                </div>
+
+                <!-- Revealed Animal Overlay Result -->
+                <div id="egg-result-card" class="hidden absolute inset-0 bg-white/95 p-6 flex-col items-center justify-center space-y-3 rounded-3xl animate-fade-in z-20">
+                    <div class="text-8xl animate-bounce" id="revealed-animal-emoji">🐢</div>
+                    <h3 id="revealed-animal-name" class="text-2xl sm:text-3xl font-extrabold text-amber-600">¡Tortuga Marina!</h3>
+                    <div class="bg-yellow-100 border-2 border-yellow-300 p-3 rounded-2xl max-w-md text-xs sm:text-sm text-yellow-900 font-medium">
+                        <p id="revealed-animal-fact">¡Nací de un huevo enterrado en la arena! Todos los animales que nacen de un huevo son <b>OVÍPAROS</b>.</p>
+                    </div>
+                    <button onclick="nextEgg()" class="bubble-btn bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-6 py-3 rounded-2xl text-base shadow-lg border-2 border-emerald-300">
+                        Siguiente Huevo <i class="fas fa-arrow-right ml-1"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. MODE: EL REFUGIO MAMÁ (MAMÍFEROS) -->
+        <section id="sec-refuge" class="w-full hidden flex-col items-center text-center space-y-4">
+            <div class="flex items-center justify-between w-full max-w-xl bg-white/80 p-3 rounded-2xl shadow border-2 border-pink-300">
+                <button onclick="showSection('home')" class="bubble-btn bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-3 py-1.5 rounded-xl text-sm flex items-center gap-1">
+                    <i class="fas fa-arrow-left"></i> Menú
+                </button>
+                <span class="font-extrabold text-pink-600 text-lg sm:text-xl">🍼 El Refugio Mamá</span>
+                <span id="mammal-counter-badge" class="bg-pink-400 text-white font-bold px-3 py-1 rounded-full text-xs">0 / 4</span>
+            </div>
+
+            <div class="glass-card w-full max-w-xl p-6 rounded-3xl flex flex-col items-center shadow-xl relative border-4 border-pink-200">
+                <p id="refuge-hint" class="text-slate-700 font-bold text-base sm:text-lg mb-2">
+                    ¡Haz clic en el tazón de leche para alimentar a la mamá y ayudar a que nazca su bebé!
+                </p>
+
+                <!-- Mother Animal Stage -->
+                <div class="relative my-4 flex items-center justify-center min-h-[200px]">
+                    <div id="mother-container" class="relative text-center">
+                        <div id="mother-emoji" class="text-8xl sm:text-9xl transition-transform duration-300">🦁</div>
+                        <div id="baby-emoji" class="text-5xl absolute -bottom-2 -right-4 hidden animate-bounce">🦁</div>
+                    </div>
+                </div>
+
+                <!-- Milk Bottle / Food Action Button -->
+                <div class="flex items-center justify-center my-2">
+                    <button id="feed-btn" onclick="feedMother()" class="bubble-btn bg-pink-500 hover:bg-pink-600 text-white font-extrabold px-6 py-3 rounded-2xl text-lg flex items-center gap-3 shadow-lg border-2 border-pink-300">
+                        <span class="text-2xl">🍼</span>
+                        <span>Dar Leche</span>
+                    </button>
+                </div>
+
+                <!-- Hearts Love Bar -->
+                <div class="w-full bg-slate-200 rounded-full h-6 my-2 border-2 border-slate-300 overflow-hidden relative">
+                    <div id="refuge-progress" class="bg-gradient-to-r from-pink-400 to-rose-500 h-full w-0 transition-all duration-300 rounded-full"></div>
+                    <span id="refuge-progress-text" class="absolute inset-0 text-xs font-bold flex items-center justify-center text-slate-700">0% Cuidado</span>
+                </div>
+
+                <!-- Mammal Explanation Modal -->
+                <div id="mammal-result-card" class="hidden absolute inset-0 bg-white/95 p-6 flex-col items-center justify-center space-y-3 rounded-3xl z-20">
+                    <div class="flex items-center gap-2 text-7xl">
+                        <span id="modal-mom-emoji">🦁</span>
+                        <span class="text-3xl">+</span>
+                        <span id="modal-baby-emoji">🦁</span>
+                    </div>
+                    <h3 id="modal-mammal-title" class="text-2xl font-extrabold text-pink-600">¡Nació el Cachorro de León!</h3>
+                    <div class="bg-pink-100 border-2 border-pink-300 p-3 rounded-2xl max-w-md text-xs sm:text-sm text-pink-900 font-medium">
+                        <p id="modal-mammal-fact">Nació del vientre de su mamá y se alimenta con su leche materna. Por eso es un <b>MAMÍFERO</b>.</p>
+                    </div>
+                    <button onclick="nextMammal()" class="bubble-btn bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-6 py-3 rounded-2xl text-base shadow-lg border-2 border-emerald-300">
+                        Cuidar Otra Mamá <i class="fas fa-arrow-right ml-1"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. MODE: EL GRAN DESAFÍO / DETECTIVE -->
+        <section id="sec-detective" class="w-full hidden flex-col items-center text-center space-y-4">
+            <div class="flex items-center justify-between w-full max-w-2xl bg-white/80 p-3 rounded-2xl shadow border-2 border-sky-300">
+                <button onclick="showSection('home')" class="bubble-btn bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-3 py-1.5 rounded-xl text-sm flex items-center gap-1">
+                    <i class="fas fa-arrow-left"></i> Menú
+                </button>
+                <span class="font-extrabold text-sky-600 text-lg sm:text-xl">🕵️‍♂️ El Desafío Detective</span>
+                <span id="score-badge" class="bg-sky-500 text-white font-bold px-3 py-1 rounded-full text-xs">Puntos: 0</span>
+            </div>
+
+            <div class="glass-card w-full max-w-2xl p-6 rounded-3xl flex flex-col items-center shadow-xl border-4 border-sky-200 space-y-4 relative">
+                <p class="text-slate-700 font-bold text-sm sm:text-base">
+                    ¿Este animal nace de un HUEVO (Ovíparo) o del VIENTRE de su mamá (Mamífero)?
+                </p>
+
+                <!-- Current Animal Card -->
+                <div id="detective-card" class="bg-gradient-to-b from-sky-50 to-amber-50 p-6 rounded-3xl border-4 border-sky-300 shadow-inner w-full max-w-xs flex flex-col items-center animate-wiggle">
+                    <span id="detective-emoji" class="text-8xl mb-2">🦆</span>
+                    <span id="detective-name" class="text-xl font-extrabold text-slate-800">Ornitorrinco</span>
+                    <span id="detective-hint-tag" class="text-xs bg-sky-200 text-sky-800 font-semibold px-2 py-1 rounded-full mt-1">¡Caso Especial!</span>
+                </div>
+
+                <!-- Classification Buttons (Baskets) -->
+                <div class="grid grid-cols-2 gap-4 w-full max-w-md pt-2">
+                    <button onclick="classifyAnimal('oviparous')" class="bubble-btn bg-amber-400 hover:bg-amber-500 text-amber-950 font-extrabold p-4 rounded-2xl flex flex-col items-center shadow-lg border-2 border-amber-300">
+                        <span class="text-3xl mb-1">🪺</span>
+                        <span>OVÍPARO</span>
+                        <span class="text-[10px] opacity-80 font-normal">(Nace de Huevo)</span>
+                    </button>
+
+                    <button onclick="classifyAnimal('mammal')" class="bubble-btn bg-pink-400 hover:bg-pink-500 text-white font-extrabold p-4 rounded-2xl flex flex-col items-center shadow-lg border-2 border-pink-300">
+                        <span class="text-3xl mb-1">🍼</span>
+                        <span>MAMÍFERO</span>
+                        <span class="text-[10px] opacity-80 font-normal">(Vientre / Leche)</span>
+                    </button>
+                </div>
+
+                <!-- Special Platypus / Case Modal Feedback -->
+                <div id="detective-feedback-modal" class="hidden absolute inset-0 bg-white/95 p-6 flex-col items-center justify-center space-y-3 rounded-3xl z-20">
+                    <div id="feedback-icon" class="text-7xl">🎉</div>
+                    <h3 id="feedback-title" class="text-2xl font-extrabold text-emerald-600">¡Correcto!</h3>
+                    <p id="feedback-text" class="text-xs sm:text-sm text-slate-700 bg-slate-100 p-4 rounded-2xl border border-slate-300 max-w-md font-medium">
+                        El ornitorrinco es un caso único: ¡pone huevos PERO alimenta a sus bebés con leche materna! Es un mamífero muy especial llamado monotrema.
+                    </p>
+                    <button onclick="nextDetectiveAnimal()" class="bubble-btn bg-sky-500 hover:bg-sky-600 text-white font-bold px-6 py-2.5 rounded-2xl text-base shadow border-2 border-sky-300">
+                        Siguiente Animal <i class="fas fa-play ml-1"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. MODE: ÁLBUM DE ESTAMPAS -->
+        <section id="sec-album" class="w-full hidden flex-col items-center text-center space-y-4">
+            <div class="flex items-center justify-between w-full max-w-4xl bg-white/80 p-3 rounded-2xl shadow border-2 border-purple-300">
+                <button onclick="showSection('home')" class="bubble-btn bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-3 py-1.5 rounded-xl text-sm flex items-center gap-1">
+                    <i class="fas fa-arrow-left"></i> Menú
+                </button>
+                <span class="font-extrabold text-purple-700 text-lg sm:text-xl">📖 Álbum de la Naturaleza</span>
+                <span class="text-xs font-bold text-purple-600">Colección Completa</span>
+            </div>
+
+            <!-- Sticker Grid Container -->
+            <div id="album-grid" class="glass-card w-full max-w-4xl p-4 sm:p-6 rounded-3xl grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4 border-4 border-purple-200">
+                <!-- Dynamically generated cards -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full bg-emerald-800 text-white p-4 text-center text-xs sm:text-sm font-medium border-t-4 border-emerald-600">
+        <p>Zoowonder: El Secreto del Huevo Dorado &copy; 2026 - Una aventura interactiva de ciencias naturales para niños.</p>
+    </footer>
+
+    <script>
+        /* ====================================================================
+         * DATA DEFINITIONS: OVIPAROUS & MAMMALS
+         * ==================================================================== */
+        const OVIPAROUS_ANIMALS = [
+            { id: 'turtle', name: 'Tortuga Marina', emoji: '🐢', fact: '¡Nací de un huevo enterrado en la playa! Todos los animales que nacen de un huevo son OVÍPAROS.', sound: 'water' },
+            { id: 'peacock', name: 'Pavo Real', emoji: '🦚', fact: '¡Nací de un huevo con plumas hermosas! Las aves son animales OVÍPAROS.', sound: 'bird' },
+            { id: 'crocodile', name: 'Cocodrilo', emoji: '🐊', fact: '¡Mamá cocodrilo cuida mi huevo hasta que rompo el cascarón! Soy un reptil OVÍPARO.', sound: 'roar' },
+            { id: 'penguin', name: 'Pingüino', emoji: '🐧', fact: '¡Papá pingüino cuidó mi huevo entre sus patas en el frío hielo! Soy un ave OVÍPARA.', sound: 'bird' },
+            { id: 'dino', name: 'Dinosaurio Bebé', emoji: '🦕', fact: '¡Hace millones de años los dinosaurios nacían de huevos gigantes! Eran OVÍPAROS.', sound: 'roar' }
+        ];
+
+        const MAMMAL_ANIMALS = [
+            { id: 'lion', name: 'León', momEmoji: '🦁', babyEmoji: '🦁', fact: 'Nací del vientre de mi mamá y me alimento con su leche rica. ¡Soy un MAMÍFERO!', sound: 'roar' },
+            { id: 'whale', name: 'Ballena Azul', momEmoji: '🐳', babyEmoji: '🐋', fact: 'Aunque vivo bajo el agua, nazco del vientre de mamá y tomo leche. ¡Las ballenas son MAMÍFEROS!', sound: 'water' },
+            { id: 'bear', name: 'Oso Pardo', momEmoji: '🐻', babyEmoji: '🧸', fact: 'Nací en una cueva abrigadita dentro del vientre de mi mamá oso. ¡Soy un MAMÍFERO!', sound: 'roar' },
+            { id: 'dog', name: 'Perrito', momEmoji: '🐕', babyEmoji: '🐶', fact: 'Nací junto a mis hermanitos de la pancita de mamá perro y tomamos lechita. ¡Somos MAMÍFEROS!', sound: 'bark' }
+        ];
+
+        const DETECTIVE_ANIMALS = [
+            { id: 'platypus', name: 'Ornitorrinco', emoji: '🦆', type: 'mammal', isSpecial: true, fact: '¡Caso Misterioso! Tiene pico de pato y PONE HUEVOS, pero como alimenta a sus bebés con leche materna, la ciencia lo clasifica como MAMÍFERO (Monotrema).' },
+            { id: 'frog', name: 'Rana Verde', emoji: '🐸', type: 'oviparous', isSpecial: false, fact: '¡Correcto! Las ranas ponen miles de huevitos transparentes en el agua. Son OVÍPAROS.' },
+            { id: 'dolphin', name: 'Delfín', emoji: '🐬', type: 'mammal', isSpecial: false, fact: '¡Excelente! Los delfines nacen del vientre de su mamá bajo el mar y toman leche. Son MAMÍFEROS.' },
+            { id: 'hen', name: 'Gallina', emoji: '🐔', type: 'oviparous', isSpecial: false, fact: '¡Muy bien! Las gallinas ponen huevos de donde nacen los pollitos. Son OVÍPARAS.' },
+            { id: 'elephant', name: 'Elefante', emoji: '🐘', type: 'mammal', isSpecial: false, fact: '¡Magnífico! Un bebé elefante crece durante casi dos años en el vientre de su mamá. Es un MAMÍFERO.' },
+            { id: 'eagle', name: 'Águila', emoji: '🦅', type: 'oviparous', isSpecial: false, fact: '¡Súper! Las águilas nacen de huevos en nidos muy altos. Son OVÍPARAS.' }
+        ];
+
+        /* ====================================================================
+         * STATE MANAGEMENT
+         * ==================================================================== */
+        let state = {
+            unlockedAnimals: new Set(['turtle', 'lion']), // Default unlocked
+            audioEnabled: true,
+            currentEggIndex: 0,
+            eggClicks: 0,
+            currentMammalIndex: 0,
+            mammalFeeds: 0,
+            detectiveIndex: 0,
+            detectiveScore: 0
+        };
+
+        /* ====================================================================
+         * WEB AUDIO API SYNTHESIZER (No external audio files needed)
+         * ==================================================================== */
+        let audioCtx = null;
+
+        function getAudioContext() {
+            if (!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContext();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            return audioCtx;
+        }
+
+        function playSound(type) {
+            if (!state.audioEnabled) return;
+            try {
+                const ctx = getAudioContext();
+                const now = ctx.currentTime;
+
+                if (type === 'click') {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(400, now);
+                    osc.frequency.exponentialRampToValueAtTime(800, now + 0.08);
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.08);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.08);
+                } 
+                else if (type === 'crack') {
+                    // White noise burst for cracking sound
+                    const bufferSize = ctx.sampleRate * 0.1;
+                    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+                    const data = buffer.getChannelData(0);
+                    for (let i = 0; i < bufferSize; i++) {
+                        data[i] = Math.random() * 2 - 1;
+                    }
+                    const noise = ctx.createBufferSource();
+                    noise.buffer = buffer;
+                    const filter = ctx.createBiquadFilter();
+                    filter.type = 'highpass';
+                    filter.frequency.value = 1000;
+                    const gain = ctx.createGain();
+                    gain.gain.setValueAtTime(0.4, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                    noise.connect(filter);
+                    filter.connect(gain);
+                    gain.connect(ctx.destination);
+                    noise.start(now);
+                } 
+                else if (type === 'hatch' || type === 'fanfare') {
+                    // Arpeggio magic sound
+                    const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+                    notes.forEach((freq, idx) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+                        gain.gain.setValueAtTime(0.3, now + idx * 0.08);
+                        gain.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.08 + 0.3);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(now + idx * 0.08);
+                        osc.stop(now + idx * 0.08 + 0.3);
+                    });
+                }
+                else if (type === 'slurp') {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(200, now);
+                    osc.frequency.linearRampToValueAtTime(600, now + 0.15);
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.15);
+                }
+                else if (type === 'wrong') {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(200, now);
+                    osc.frequency.linearRampToValueAtTime(120, now + 0.25);
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.25);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.25);
+                }
+            } catch (e) {
+                console.log("Audio play suppressed or unsupported");
+            }
+        }
+
+        /* ====================================================================
+         * SPEECH SYNTHESIS (Voice Narration)
+         * ==================================================================== */
+        function speakInstruction(text) {
+            if (!state.audioEnabled) return;
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel(); // Stop current speech
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'es-ES';
+                utterance.rate = 0.95; // Friendly pace for children
+                utterance.pitch = 1.1; // Cheerful voice
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function toggleAudioState() {
+            state.audioEnabled = !state.audioEnabled;
+            const statusText = document.getElementById('audio-status');
+            const statusIcon = document.getElementById('audio-icon');
+            if (state.audioEnabled) {
+                statusText.textContent = 'Sonido: ON';
+                statusIcon.className = 'fas fa-volume-up text-lg text-amber-600';
+                playSound('click');
+            } else {
+                statusText.textContent = 'Sonido: OFF';
+                statusIcon.className = 'fas fa-volume-mute text-lg text-slate-400';
+                if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            }
+        }
+
+        /* ====================================================================
+         * NAVIGATION & SCREEN SWITCHING
+         * ==================================================================== */
+        function showSection(sectionId) {
+            playSound('click');
+            ['sec-home', 'sec-incubator', 'sec-refuge', 'sec-detective', 'sec-album'].forEach(id => {
+                const el = document.getElementById(id);
+                if (id === 'sec-' + sectionId) {
+                    el.classList.remove('hidden');
+                    el.classList.add('flex');
+                } else {
+                    el.classList.add('hidden');
+                    el.classList.remove('flex');
+                }
+            });
+
+            if (sectionId === 'album') renderAlbum();
+        }
+
+        /* ====================================================================
+         * GAME MODE 1: INCUBATOR LOGIC
+         * ==================================================================== */
+        function startIncubator() {
+            state.currentEggIndex = 0;
+            state.eggClicks = 0;
+            showSection('incubator');
+            setupEgg();
+            speakInstruction("¡Bienvenido a la Incubadora Mágica! Toca el huevo varias veces para que el bebé rompa el cascarón.");
+        }
+
+        function setupEgg() {
+            const current = OVIPAROUS_ANIMALS[state.currentEggIndex];
+            state.eggClicks = 0;
+            document.getElementById('egg-progress').style.width = '0%';
+            document.getElementById('egg-progress-text').textContent = '0% Calor';
+            document.getElementById('crack-lines').style.opacity = '0';
+            document.getElementById('egg-emoji-preview').textContent = '❓';
+            document.getElementById('egg-result-card').classList.add('hidden');
+            document.getElementById('egg-result-card').classList.remove('flex');
+            document.getElementById('egg-counter-badge').textContent = `${state.currentEggIndex + 1} / ${OVIPAROUS_ANIMALS.length}`;
+        }
+
+        function crackEgg() {
+            if (state.eggClicks >= 5) return; // Already cracked
+
+            state.eggClicks++;
+            playSound('crack');
+
+            const eggEl = document.getElementById('egg-element');
+            eggEl.classList.remove('animate-egg-shake');
+            void eggEl.offsetWidth; // Trigger reflow for animation restart
+            eggEl.classList.add('animate-egg-shake');
+
+            const percent = (state.eggClicks / 5) * 100;
+            document.getElementById('egg-progress').style.width = percent + '%';
+            document.getElementById('egg-progress-text').textContent = percent + '% Calor';
+
+            if (state.eggClicks >= 2) {
+                document.getElementById('crack-lines').style.opacity = '0.6';
+            }
+            if (state.eggClicks >= 4) {
+                document.getElementById('crack-lines').style.opacity = '1';
+            }
+
+            if (state.eggClicks >= 5) {
+                // Fully Hatch
+                setTimeout(() => {
+                    hatchEgg();
+                }, 300);
+            }
+        }
+
+        function hatchEgg() {
+            const animal = OVIPAROUS_ANIMALS[state.currentEggIndex];
+            state.unlockedAnimals.add(animal.id);
+            updateUnlockedCount();
+
+            playSound('hatch');
+            confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
+
+            document.getElementById('revealed-animal-emoji').textContent = animal.emoji;
+            document.getElementById('revealed-animal-name').textContent = animal.name;
+            document.getElementById('revealed-animal-fact').innerHTML = animal.fact;
+
+            const modal = document.getElementById('egg-result-card');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            speakInstruction(`¡Felicidades! Nació una ${animal.name}. ${animal.fact.replace(/<b>/g, '').replace(/<\/b>/g, '')}`);
+        }
+
+        function nextEgg() {
+            state.currentEggIndex = (state.currentEggIndex + 1) % OVIPAROUS_ANIMALS.length;
+            setupEgg();
+        }
+
+        /* ====================================================================
+         * GAME MODE 2: MOTHER REFUGE LOGIC
+         * ==================================================================== */
+        function startRefuge() {
+            state.currentMammalIndex = 0;
+            state.mammalFeeds = 0;
+            showSection('refuge');
+            setupMammal();
+            speakInstruction("¡Bienvenido al Refugio Mamá! Haz clic en el botón para alimentar a la mamá con leche y cuidar a su bebé.");
+        }
+
+        function setupMammal() {
+            const animal = MAMMAL_ANIMALS[state.currentMammalIndex];
+            state.mammalFeeds = 0;
+            document.getElementById('refuge-progress').style.width = '0%';
+            document.getElementById('refuge-progress-text').textContent = '0% Cuidado';
+            document.getElementById('mother-emoji').textContent = animal.momEmoji;
+            document.getElementById('baby-emoji').classList.add('hidden');
+            document.getElementById('mammal-result-card').classList.add('hidden');
+            document.getElementById('mammal-result-card').classList.remove('flex');
+            document.getElementById('mammal-counter-badge').textContent = `${state.currentMammalIndex + 1} / ${MAMMAL_ANIMALS.length}`;
+        }
+
+        function feedMother() {
+            if (state.mammalFeeds >= 4) return;
+
+            state.mammalFeeds++;
+            playSound('slurp');
+
+            const momEl = document.getElementById('mother-emoji');
+            momEl.style.transform = 'scale(1.15)';
+            setTimeout(() => momEl.style.transform = 'scale(1)', 200);
+
+            const percent = (state.mammalFeeds / 4) * 100;
+            document.getElementById('refuge-progress').style.width = percent + '%';
+            document.getElementById('refuge-progress-text').textContent = percent + '% Cuidado';
+
+            if (state.mammalFeeds >= 4) {
+                setTimeout(() => {
+                    deliverBabyMammal();
+                }, 300);
+            }
+        }
+
+        function deliverBabyMammal() {
+            const animal = MAMMAL_ANIMALS[state.currentMammalIndex];
+            state.unlockedAnimals.add(animal.id);
+            updateUnlockedCount();
+
+            playSound('fanfare');
+            confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
+
+            document.getElementById('baby-emoji').textContent = animal.babyEmoji;
+            document.getElementById('baby-emoji').classList.remove('hidden');
+
+            document.getElementById('modal-mom-emoji').textContent = animal.momEmoji;
+            document.getElementById('modal-baby-emoji').textContent = animal.babyEmoji;
+            document.getElementById('modal-mammal-title').textContent = `¡Nació el bebé de ${animal.name}!`;
+            document.getElementById('modal-mammal-fact').innerHTML = animal.fact;
+
+            const modal = document.getElementById('mammal-result-card');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            speakInstruction(`¡Qué ternura! Nació la cría de ${animal.name}. ${animal.fact.replace(/<b>/g, '').replace(/<\/b>/g, '')}`);
+        }
+
+        function nextMammal() {
+            state.currentMammalIndex = (state.currentMammalIndex + 1) % MAMMAL_ANIMALS.length;
+            setupMammal();
+        }
+
+        /* ====================================================================
+         * GAME MODE 3: DETECTIVE CHALLENGE LOGIC
+         * ==================================================================== */
+        function startDetective() {
+            state.detectiveIndex = 0;
+            state.detectiveScore = 0;
+            document.getElementById('score-badge').textContent = 'Puntos: 0';
+            showSection('detective');
+            setupDetectiveAnimal();
+            speakInstruction("¡Bienvenido Detective! Observa el animal y decide si nace de un huevo o del vientre de su mamá.");
+        }
+
+        function setupDetectiveAnimal() {
+            const current = DETECTIVE_ANIMALS[state.detectiveIndex];
+            document.getElementById('detective-emoji').textContent = current.emoji;
+            document.getElementById('detective-name').textContent = current.name;
+            document.getElementById('detective-feedback-modal').classList.add('hidden');
+            document.getElementById('detective-feedback-modal').classList.remove('flex');
+
+            const hintTag = document.getElementById('detective-hint-tag');
+            if (current.isSpecial) {
+                hintTag.textContent = '¡Caso Misterioso!';
+                hintTag.className = 'text-xs bg-amber-200 text-amber-900 font-bold px-2 py-1 rounded-full mt-1 animate-pulse';
+            } else {
+                hintTag.textContent = 'Animal Silvestre';
+                hintTag.className = 'text-xs bg-sky-200 text-sky-800 font-semibold px-2 py-1 rounded-full mt-1';
+            }
+        }
+
+        function classifyAnimal(chosenType) {
+            const current = DETECTIVE_ANIMALS[state.detectiveIndex];
+            const feedbackModal = document.getElementById('detective-feedback-modal');
+            const feedbackTitle = document.getElementById('feedback-title');
+            const feedbackText = document.getElementById('feedback-text');
+            const feedbackIcon = document.getElementById('feedback-icon');
+
+            if (chosenType === current.type) {
+                // Correct choice
+                state.detectiveScore += 10;
+                document.getElementById('score-badge').textContent = `Puntos: ${state.detectiveScore}`;
+                state.unlockedAnimals.add(current.id);
+                updateUnlockedCount();
+
+                playSound('fanfare');
+                confetti({ particleCount: 60, origin: { y: 0.6 } });
+
+                feedbackIcon.textContent = '🎉';
+                feedbackTitle.textContent = '¡Correcto, Detective!';
+                feedbackTitle.className = 'text-2xl font-extrabold text-emerald-600';
+                feedbackText.textContent = current.fact;
+
+                speakInstruction(`¡Excelente! ${current.fact}`);
+            } else {
+                // Wrong choice
+                playSound('wrong');
+                feedbackIcon.textContent = '🤔';
+                feedbackTitle.textContent = '¡Casi casi!';
+                feedbackTitle.className = 'text-2xl font-extrabold text-amber-600';
+                feedbackText.textContent = `Recuerda: ${current.fact}`;
+
+                speakInstruction(`Ups. Revisa la pista: ${current.fact}`);
+            }
+
+            feedbackModal.classList.remove('hidden');
+            feedbackModal.classList.add('flex');
+        }
+
+        function nextDetectiveAnimal() {
+            state.detectiveIndex = (state.detectiveIndex + 1) % DETECTIVE_ANIMALS.length;
+            setupDetectiveAnimal();
+        }
+
+        /* ====================================================================
+         * ALBUM RENDERER
+         * ==================================================================== */
+        function renderAlbum() {
+            const grid = document.getElementById('album-grid');
+            grid.innerHTML = '';
+
+            // Combine all unique animals
+            const allAnimals = [
+                ...OVIPAROUS_ANIMALS.map(a => ({ ...a, category: 'Ovíparo' })),
+                ...MAMMAL_ANIMALS.map(a => ({ ...a, emoji: a.momEmoji, category: 'Mamífero' })),
+                ...DETECTIVE_ANIMALS.filter(a => !['turtle','lion'].includes(a.id)).map(a => ({ ...a, category: a.type === 'oviparous' ? 'Ovíparo' : 'Mamífero' }))
+            ];
+
+            // Filter unique by ID
+            const uniqueList = Array.from(new Map(allAnimals.map(item => [item['id'], item])).values());
+
+            uniqueList.forEach(animal => {
+                const isUnlocked = state.unlockedAnimals.has(animal.id);
+                const card = document.createElement('div');
+                card.className = `p-4 rounded-2xl flex flex-col items-center text-center transition-transform shadow ${
+                    isUnlocked 
+                    ? 'bg-white border-2 border-purple-300 hover:scale-105 cursor-pointer' 
+                    : 'bg-slate-200 border-2 border-slate-300 opacity-60'
+                }`;
+
+                card.onclick = () => {
+                    if (isUnlocked) {
+                        playSound('click');
+                        speakInstruction(`${animal.name}. Pertenece al grupo de los ${animal.category}s. ${animal.fact || ''}`);
+                    } else {
+                        playSound('wrong');
+                        speakInstruction(`Animal bloqueado. Sigue jugando en los minijuegos para desbloquear a ${animal.name}.`);
+                    }
+                };
+
+                card.innerHTML = `
+                    <div class="text-5xl sm:text-6xl mb-2">${isUnlocked ? animal.emoji : '🔒'}</div>
+                    <span class="font-extrabold text-xs sm:text-sm text-slate-800">${isUnlocked ? animal.name : '???'}</span>
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full mt-1 ${
+                        isUnlocked 
+                        ? (animal.category === 'Ovíparo' ? 'bg-amber-100 text-amber-800' : 'bg-pink-100 text-pink-800')
+                        : 'bg-slate-300 text-slate-600'
+                    }">
+                        ${isUnlocked ? animal.category : 'Bloqueado'}
+                    </span>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function updateUnlockedCount() {
+            document.getElementById('unlocked-count').textContent = state.unlockedAnimals.size;
+        }
+
+        /* Initialize default counters */
+        window.onload = () => {
+            updateUnlockedCount();
+        };
+    </script>
+</body>
+</html>

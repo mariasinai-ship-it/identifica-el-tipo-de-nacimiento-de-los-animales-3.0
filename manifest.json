@@ -1,0 +1,21 @@
+{
+  "short_name": "Zoowonder",
+  "name": "Zoowonder: El Secreto del Huevo Dorado",
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "./icon-512.jpg",
+      "type": "image/jpeg",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "./index.html",
+  "background_color": "#a8ff78",
+  "theme_color": "#4ade80",
+  "display": "standalone",
+  "orientation": "portrait"
+}
